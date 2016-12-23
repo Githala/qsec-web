@@ -1,0 +1,126 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+
+<link rel="import" href="./people/person-details.html">
+
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="page-people">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        height: 100%;
+        box-sizing: border-box;
+        position: relative;
+      }
+      
+      .list {
+        height: 100%;
+        width: 300px;
+        background: white;
+      }
+      
+      .detail
+      {
+        position: absolute;
+        top: 0px;
+        left: 310px;
+        right: 0px;
+        height: 100%;
+        background: white;
+      }
+      
+      .list a{
+        display: block;
+        height: 40px;
+        line-height: 40px;
+        padding-left: 10px;
+        border-bottom: 1px solid lightgray;
+        text-decoration: none;
+        color: black;
+      }
+      
+      .list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+      
+    </style>
+    
+    <app-route
+        route="{{route}}"
+        pattern="/:person"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+    
+    <iron-ajax
+        auto
+        url="http://localhost:8080/api/people"
+        handle-as="json"
+        last-response="{{people}}"
+        on-response="peopleLoaded"
+        debounce-duration="300"></iron-ajax>
+
+    <div class="list">
+      <iron-selector selected="[[personId]]" attr-for-selected="name">
+        <template is="dom-repeat" items="[[people]]">
+          <a class="item" name="[[item.id]]" href="/people/[[item.id]]">
+              [[item.firstname]] [[item.lastname]]
+          </a>
+        </template>
+      </iron-selector>
+    </div>
+    
+    <div class="detail">
+      <template is="dom-if" if="{{person}}">
+        <person-details person="[[person]]"></person-details>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'page-people',
+      
+      properties: {
+        route: {
+          type: Object,
+          notify: true
+        }
+      },
+      
+      observers: [
+        '_routePageChanged(routeData.person)',
+      ],
+
+      _setSelectedPerson: function() {
+        if (this.personId !== undefined && this.people !== undefined)
+          this.person = this.people[this.personId];
+      },
+      
+      peopleLoaded: function(data)
+      {
+        this._setSelectedPerson();
+      },
+
+      _routePageChanged: function(personId) {
+        this.personId = personId || undefined;
+        this._setSelectedPerson();
+      },
+    });
+  </script>
+</dom-module>
